@@ -2,8 +2,9 @@
  * Справочник источников — загрузка из Google Sheets или CSV, фильтры, поиск, инструкция
  */
 
+// В таблице несколько листов; по умолчанию экспортируется первый («Ответы на форму»). Указываем gid листа «Реестр источников» (gid виден в ссылке при открытии этого листа в таблице).
 const GOOGLE_SHEETS_CSV_URL =
-  'https://docs.google.com/spreadsheets/d/1RjulbapYc5d-ePahN2KVvwRufOit03VRNQ7kl2jsgoI/export?format=csv';
+  'https://docs.google.com/spreadsheets/d/1RjulbapYc5d-ePahN2KVvwRufOit03VRNQ7kl2jsgoI/export?format=csv&gid=6407604';
 
 const COLUMNS = [
   'Направление',
@@ -440,17 +441,27 @@ function closeModal() {
   el.modal.hidden = true;
 }
 
-// Загрузка данных: сначала Google Sheets, при неудаче — локальный CSV (если есть)
+// Загрузка данных: сначала Google Sheets (напрямую или через CORS-прокси), при неудаче — локальный CSV
 async function loadFromGoogleSheets() {
-  try {
-    const res = await fetch(GOOGLE_SHEETS_CSV_URL);
+  const tryFetch = async (url) => {
+    const res = await fetch(url);
     if (!res.ok) throw new Error(`Ошибка загрузки: ${res.status}`);
     const text = await res.text();
     const sources = csvToSources(text);
-    if (sources.length === 0) throw new Error('В таблице нет данных с колонками Направление и Наименование источника.');
+    if (sources.length === 0) throw new Error('В таблице нет данных.');
     return sources;
+  };
+  try {
+    return await tryFetch(GOOGLE_SHEETS_CSV_URL);
   } catch (e) {
-    console.warn('Google Sheets:', e);
+    console.warn('Google Sheets (прямой запрос):', e);
+  }
+  if (!GOOGLE_SHEETS_CSV_URL) return null;
+  try {
+    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(GOOGLE_SHEETS_CSV_URL);
+    return await tryFetch(proxyUrl);
+  } catch (e2) {
+    console.warn('Google Sheets (через прокси):', e2);
     return null;
   }
 }
