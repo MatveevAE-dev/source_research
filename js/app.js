@@ -6,6 +6,12 @@
 const GOOGLE_SHEETS_CSV_URL =
   'https://docs.google.com/spreadsheets/d/1RjulbapYc5d-ePahN2KVvwRufOit03VRNQ7kl2jsgoI/export?format=csv&gid=6407604';
 
+// Палитра цветов для направлений (при росте числа направлений цвета повторяются по циклу)
+const DIRECTION_COLORS = [
+  '#2563eb', '#dc2626', '#16a34a', '#ca8a04', '#9333ea', '#0d9488', '#ea580c', '#be185d',
+  '#4f46e5', '#059669', '#b91c1c', '#65a30d', '#0369a1', '#c026d3', '#15803d', '#a16207',
+];
+
 const COLUMNS = [
   'Направление',
   'Наименование источника',
@@ -243,6 +249,7 @@ const el = {
   loading: document.getElementById('loading'),
   error: document.getElementById('error'),
   content: document.getElementById('content'),
+  contentStats: document.getElementById('content-stats'),
   search: document.getElementById('search'),
   triggerDirection: document.getElementById('trigger-direction'),
   triggerCategory: document.getElementById('trigger-category'),
@@ -373,8 +380,29 @@ function filterSources(sources) {
 
 function render(filtered) {
   const groupedFiltered = groupByDirectionAndCategory(filtered);
+  const totalCount = filtered.length;
 
-  const html = groupedFiltered.map(({ direction, categories }) => {
+  const statsHtml = totalCount > 0
+    ? `
+    <div class="content-stats">
+      <span class="content-stats__total">Всего источников: <strong>${totalCount}</strong></span>
+      <div class="content-stats__list">
+        ${groupedFiltered.map(({ direction, categories }, i) => {
+          const count = categories.reduce((sum, { items }) => sum + items.length, 0);
+          const color = DIRECTION_COLORS[i % DIRECTION_COLORS.length];
+          return `<a href="#direction-${i}" class="content-stats__item" style="--dir-color:${color}">${escapeHtml(direction)}: <strong>${count}</strong></a>`;
+        }).join('')}
+      </div>
+    </div>`
+    : '';
+
+  if (el.contentStats) {
+    el.contentStats.innerHTML = statsHtml;
+    el.contentStats.classList.toggle('hidden', totalCount === 0);
+  }
+
+  const sectionsHtml = groupedFiltered.map(({ direction, categories }, dirIndex) => {
+    const color = DIRECTION_COLORS[dirIndex % DIRECTION_COLORS.length];
     const catsHtml = categories.map(({ name, items }) => {
       const cardsHtml = items.map(item => {
         const link = normalizeUrl(item['Ссылка']);
@@ -397,13 +425,14 @@ function render(filtered) {
     }).join('');
 
     return `
-      <section class="section-direction" aria-labelledby="dir-${escapeAttr(direction)}">
+      <section id="direction-${dirIndex}" class="section-direction" aria-labelledby="dir-${escapeAttr(direction)}" style="--direction-color:${color}; border-left-color:${color};">
         <h2 class="section-direction__title" id="dir-${escapeAttr(direction)}">${escapeHtml(direction)}</h2>
         ${catsHtml}
       </section>`;
   }).join('');
 
-  el.content.innerHTML = html || '<p class="loading">Нет источников по выбранным фильтрам.</p>';
+  const emptyMsg = '<p class="loading">Нет источников по выбранным фильтрам.</p>';
+  el.content.innerHTML = totalCount > 0 ? sectionsHtml : emptyMsg;
 }
 
 function escapeHtml(s) {
