@@ -250,8 +250,6 @@ const el = {
   panelCategory: document.getElementById('panel-category'),
   panelCountry: document.getElementById('panel-country'),
   btnInstruction: document.getElementById('btn-instruction'),
-  btnUploadCsv: document.getElementById('btn-upload-csv'),
-  inputCsv: document.getElementById('input-csv'),
   modal: document.getElementById('modal-instruction'),
   modalBackdrop: document.getElementById('modal-backdrop'),
   modalClose: document.getElementById('modal-close'),
@@ -484,23 +482,6 @@ function applyData(sources) {
   applyFiltersAndRender();
 }
 
-function onCsvFile(file) {
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const sources = csvToSources(reader.result);
-      if (sources.length === 0) {
-        showError('В файле не найдено строк с колонками «Направление» и «Наименование источника».');
-        return;
-      }
-      applyData(sources);
-    } catch (e) {
-      showError('Ошибка разбора CSV: ' + e.message);
-    }
-  };
-  reader.readAsText(file, 'UTF-8');
-}
-
 // Инициализация
 function init() {
   buildInstructionModal();
@@ -510,13 +491,6 @@ function init() {
   el.modalBackdrop.addEventListener('click', closeModal);
   el.modal.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeModal();
-  });
-
-  el.btnUploadCsv.addEventListener('click', () => el.inputCsv.click());
-  el.inputCsv.addEventListener('change', () => {
-    const file = el.inputCsv.files && el.inputCsv.files[0];
-    if (file) onCsvFile(file);
-    el.inputCsv.value = '';
   });
 
   el.search.addEventListener('input', applyFiltersAndRender);
@@ -559,7 +533,7 @@ function init() {
       applyData(sources);
     } else {
       showLoading(false);
-      showError('Не удалось загрузить данные из Google Таблицы (возможна блокировка CORS). Загрузите CSV с вашего компьютера по кнопке «Загрузить свой CSV» или положите файл «Источники сигналов - Реестр источников.csv» в папку с сайтом.');
+      showError('Не удалось загрузить данные из Google Таблицы (возможна блокировка CORS). Убедитесь, что в config.js указана ссылка на таблицу или что в папке с сайтом есть файл «Источники сигналов - Реестр источников.csv».');
       showContent(false);
     }
   })();

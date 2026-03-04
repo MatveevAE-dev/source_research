@@ -88,6 +88,15 @@ body {
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
+a.btn {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.btn--primary {
+  color: #fff;
+}
+
 .btn__icon {
   font-size: 1rem;
 }
