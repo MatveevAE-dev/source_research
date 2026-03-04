@@ -107,6 +107,10 @@ a.btn--primary {
   border-color: var(--color-accent);
 }
 
+.btn--primary .btn__icon {
+  filter: brightness(0) invert(1);
+}
+
 .btn--primary:hover {
   background: var(--color-accent-hover);
   border-color: var(--color-accent-hover);
@@ -114,13 +118,14 @@ a.btn--primary {
 
 .btn--secondary {
   background: var(--color-bg);
-  color: var(--color-accent);
-  border-color: var(--color-border);
+  color: #1d4ed8;
+  border: 1px solid #9ca3af;
 }
 
 .btn--secondary:hover {
   background: var(--color-tag);
   border-color: var(--color-accent);
+  color: var(--color-accent-hover);
 }
 
 /* Main */
